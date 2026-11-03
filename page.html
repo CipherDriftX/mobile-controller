@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#000">
+<title>Controller</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: #000; color: #fff; }
+  body {
+    display: grid; gap: 8px; padding: 8px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 3fr 2fr 3fr 1.5fr;
+    grid-template-areas: "up up" "left right" "down down" "space space";
+    font: 600 48px system-ui, sans-serif;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  button {
+    border: 0; border-radius: 18px; background: #1c1c1c; color: inherit; font: inherit;
+    touch-action: none; -webkit-tap-highlight-color: transparent;
+  }
+  button.on { background: #fff; color: #000; }
+  [data-k=Up] { grid-area: up; }
+  [data-k=Left] { grid-area: left; }
+  [data-k=Right] { grid-area: right; }
+  [data-k=Down] { grid-area: down; }
+  [data-k=space] { grid-area: space; font-size: 28px; letter-spacing: .2em; }
+</style>
+</head>
+<body>
+<button data-k="Up">▲</button>
+<button data-k="Left">◀</button>
+<button data-k="Right">▶</button>
+<button data-k="Down">▼</button>
+<button data-k="space">SPACE</button>
+<script>
+  const token = new URLSearchParams(location.search).get("t");
+  const send = k => fetch(`/k/${k}?t=${token}`, { method: "POST" }).catch(() => {});
+
+  for (const b of document.querySelectorAll("button")) {
+    b.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      b.classList.add("on");
+      send(b.dataset.k);
+    });
+    for (const ev of ["pointerup", "pointercancel", "pointerleave"])
+      b.addEventListener(ev, () => b.classList.remove("on"));
+  }
+</script>
+</body>
+</html>
