@@ -3,11 +3,13 @@
 import secrets
 import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 PORT = 8765
 KEYS = {"Up", "Down", "Left", "Right", "space"}  # only these, nothing else
 TOKEN = secrets.token_urlsafe(8)  # new every start; phone gets it from the URL
+PAGE = (Path(__file__).parent / "page.html").read_bytes()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -16,7 +18,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.token_ok():
             return self.reply(403, b"bad token\n")
-        self.reply(200, b"mobile-controller is running\n")
+        self.reply(200, PAGE, "text/html; charset=utf-8")
 
     def do_POST(self):
         if not self.token_ok():
