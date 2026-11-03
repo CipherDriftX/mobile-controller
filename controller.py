@@ -44,6 +44,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(500, b"wtype failed\n")
         self.reply(204)
 
+    def log_request(self, code="-", size="-"):
+        if int(code) >= 400:  # show problems only, not every key press
+            super().log_request(code, size)
+
     def token_ok(self):
         given = parse_qs(urlsplit(self.path).query).get("t", [""])[0]
         return secrets.compare_digest(given, TOKEN)
