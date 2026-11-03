@@ -38,14 +38,22 @@
   const token = new URLSearchParams(location.search).get("t");
   const send = k => fetch(`/k/${k}?t=${token}`, { method: "POST" }).catch(() => {});
 
+  // Hold = repeat, like a real keyboard: wait 300 ms, then every 80 ms.
   for (const b of document.querySelectorAll("button")) {
+    let wait, repeat;
+    const stop = () => {
+      clearTimeout(wait); clearInterval(repeat);
+      b.classList.remove("on");
+    };
     b.addEventListener("pointerdown", e => {
       e.preventDefault();
+      stop();
       b.classList.add("on");
       send(b.dataset.k);
+      wait = setTimeout(() => repeat = setInterval(() => send(b.dataset.k), 80), 300);
     });
     for (const ev of ["pointerup", "pointercancel", "pointerleave"])
-      b.addEventListener(ev, () => b.classList.remove("on"));
+      b.addEventListener(ev, stop);
   }
 </script>
 </body>
