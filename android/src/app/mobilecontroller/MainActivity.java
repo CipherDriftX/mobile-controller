@@ -2,6 +2,13 @@ package app.mobilecontroller;
 
 import android.Manifest;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHidDevice;
+import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -19,7 +26,53 @@ public class MainActivity extends Activity {
     static final int RIGHT = 0x4F, LEFT = 0x50, DOWN = 0x51, UP = 0x52, SPACE = 0x2C;
     static final int KEY_BG = 0xFF1C1C1C;
 
+    // Standard keyboard report, 8 bytes after report ID 1: [modifiers, reserved, key1..key6].
+    static final byte[] DESCRIPTOR = {
+        0x05, 0x01,              // Usage Page (Generic Desktop)
+        0x09, 0x06,              // Usage (Keyboard)
+        (byte) 0xA1, 0x01,       // Collection (Application)
+        (byte) 0x85, 0x01,       //   Report ID (1)
+        0x05, 0x07,              //   Usage Page (Keyboard)
+        0x19, (byte) 0xE0,       //   Usage Minimum (Left Ctrl)
+        0x29, (byte) 0xE7,       //   Usage Maximum (Right GUI)
+        0x15, 0x00,              //   Logical Minimum (0)
+        0x25, 0x01,              //   Logical Maximum (1)
+        0x75, 0x01,              //   Report Size (1)
+        (byte) 0x95, 0x08,       //   Report Count (8)
+        (byte) 0x81, 0x02,       //   Input (Data, Variable, Absolute): modifier bits
+        0x75, 0x08,              //   Report Size (8)
+        (byte) 0x95, 0x01,       //   Report Count (1)
+        (byte) 0x81, 0x01,       //   Input (Constant): reserved byte
+        0x75, 0x08,              //   Report Size (8)
+        (byte) 0x95, 0x06,       //   Report Count (6)
+        0x15, 0x00,              //   Logical Minimum (0)
+        0x25, 0x65,              //   Logical Maximum (101)
+        0x19, 0x00,              //   Usage Minimum (0)
+        0x29, 0x65,              //   Usage Maximum (101)
+        (byte) 0x81, 0x00,       //   Input (Data, Array): up to 6 keys held at once
+        (byte) 0xC0              // End Collection
+    };
+
     TextView status;
+    BluetoothAdapter adapter;
+    BluetoothHidDevice hid;   // Android's built-in "be a Bluetooth keyboard" profile
+    BluetoothDevice host;     // the laptop, once connected
+
+    final BluetoothHidDevice.Callback callback = new BluetoothHidDevice.Callback() {
+        @Override public void onAppStatusChanged(BluetoothDevice plugged, boolean registered) {
+            if (registered) connect(plugged);
+        }
+
+        @Override public void onConnectionStateChanged(BluetoothDevice device, int state) {
+            if (state == BluetoothProfile.STATE_CONNECTED) {
+                host = device;
+                say("Connected to " + device.getName());
+            } else if (state == BluetoothProfile.STATE_DISCONNECTED) {
+                host = null;
+                say("Not connected");
+            }
+        }
+    };
 
     @Override protected void onCreate(Bundle saved) {
         super.onCreate(saved);
@@ -60,7 +113,57 @@ public class MainActivity extends Activity {
     }
 
     void start() {
-        say("Starting...");
+        BluetoothManager bm = getSystemService(BluetoothManager.class);
+        adapter = bm == null ? null : bm.getAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            say("Turn Bluetooth on, then open the app again");
+            return;
+        }
+        boolean ok = adapter.getProfileProxy(this, new BluetoothProfile.ServiceListener() {
+            @Override public void onServiceConnected(int profile, BluetoothProfile proxy) {
+                hid = (BluetoothHidDevice) proxy;
+                BluetoothHidDeviceAppSdpSettings sdp = new BluetoothHidDeviceAppSdpSettings("Controller",
+                        "Phone keys", "mobile-controller", BluetoothHidDevice.SUBCLASS1_KEYBOARD, DESCRIPTOR);
+                if (!hid.registerApp(sdp, null, null, getMainExecutor(), callback))
+                    say("Another keyboard app is running. Close it, then open this one again.");
+            }
+
+            @Override public void onServiceDisconnected(int profile) {
+                hid = null;
+                host = null;
+                say("Bluetooth stopped");
+            }
+        }, BluetoothProfile.HID_DEVICE);
+        if (!ok) say("This phone can't act as a Bluetooth keyboard");
+        else say("Starting keyboard...");
+    }
+
+    void connect(BluetoothDevice target) {
+        if (hid == null) return;
+        if (target == null) target = laptop();
+        if (target == null) {
+            say("Pair with the laptop first (see README)");
+            return;
+        }
+        say("Connecting to " + target.getName() + "...");
+        hid.connect(target);
+    }
+
+    /** First paired computer. */
+    BluetoothDevice laptop() {
+        for (BluetoothDevice d : adapter.getBondedDevices()) {
+            BluetoothClass c = d.getBluetoothClass();
+            if (c != null && c.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER) return d;
+        }
+        return null;
+    }
+
+    @Override protected void onDestroy() {
+        if (hid != null) {
+            hid.unregisterApp();
+            adapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, hid);
+        }
+        super.onDestroy();
     }
 
     /** A key fires on finger down and lets go on finger up, like a real key. */
