@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Phone -> laptop keys. Phone opens a page, taps a button, laptop presses the key."""
 import secrets
+import shutil
+import socket
 import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -10,6 +12,16 @@ PORT = 8765
 KEYS = {"Up", "Down", "Left", "Right", "space"}  # only these, nothing else
 TOKEN = secrets.token_urlsafe(8)  # new every start; phone gets it from the URL
 PAGE = (Path(__file__).parent / "page.html").read_bytes()
+
+
+def lan_ip():
+    """IP the phone can reach. UDP connect sends nothing, it only picks the route."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("10.255.255.255", 1))
+            return s.getsockname()[0]
+        except OSError:
+            return "127.0.0.1"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -45,5 +57,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"token: {TOKEN}")
+    url = f"http://{lan_ip()}:{PORT}/?t={TOKEN}"
+    if shutil.which("qrencode"):
+        subprocess.run(["qrencode", "-t", "ANSIUTF8", "-m", "2", url])
+    print(f"Scan the QR or open on phone (same Wi-Fi):\n  {url}")
+    print("Keys go to the focused window. Ctrl+C to stop.")
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
