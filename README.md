@@ -38,6 +38,8 @@ Buttons turn red when the laptop does not answer.
 ## If the phone can't open the page
 
 - Firewall: run the `ufw` command above.
-- Campus Wi-Fi often blocks phone-to-laptop traffic. Turn on the phone hotspot,
-  connect the laptop to it, and restart `controller.py`. It prints the new URL.
+- Campus Wi-Fi often blocks phone-to-laptop traffic. BAU campus Wi-Fi does
+  (checked 2026-11-03: port open in ufw, but zero connections from the phone reached
+  the laptop). Turn on the phone hotspot, connect the laptop to it, and restart
+  `controller.py`. It prints the new URL and QR.
 - Phone and laptop must be on the same network.
