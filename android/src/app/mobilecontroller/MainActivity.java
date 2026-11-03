@@ -19,6 +19,7 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import java.util.ArrayList;
 
 /** Phone = Bluetooth keyboard with the five keys that matter. Laptop needs no app. */
 public class MainActivity extends Activity {
@@ -57,6 +58,7 @@ public class MainActivity extends Activity {
     BluetoothAdapter adapter;
     BluetoothHidDevice hid;   // Android's built-in "be a Bluetooth keyboard" profile
     BluetoothDevice host;     // the laptop, once connected
+    final ArrayList<Integer> held = new ArrayList<>();  // keys under a finger right now
 
     final BluetoothHidDevice.Callback callback = new BluetoothHidDevice.Callback() {
         @Override public void onAppStatusChanged(BluetoothDevice plugged, boolean registered) {
@@ -194,7 +196,17 @@ public class MainActivity extends Activity {
         return k;
     }
 
+    /** Send which keys are held now. Laptop repeats a held key itself, like a real keyboard. */
     void press(int code, boolean down) {
+        if (down) {
+            if (!held.contains(code)) held.add(code);
+        } else {
+            held.remove((Integer) code);
+        }
+        if (hid == null || host == null) return;
+        byte[] report = new byte[8];
+        for (int i = 0; i < held.size() && i < 6; i++) report[2 + i] = (byte) (int) held.get(i);
+        hid.sendReport(host, 1, report);
     }
 
     void say(String text) { status.setText(text); }
