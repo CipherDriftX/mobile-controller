@@ -13,22 +13,32 @@ on the laptop. Campus Wi-Fi can't block it.
 
 ### Install and pair (once)
 
-1. Open the link above on the phone and install the APK. Android asks to allow
-   installs from the browser: allow it.
-2. Open **Controller** and allow Bluetooth.
-3. On the laptop, run:
+1. Open the link above on the phone and install the APK (it updates over an older
+   version). Android asks to allow installs from the browser: allow it.
+2. Phone: Settings > Bluetooth. If the laptop (`omarchy`) is listed, tap its gear and
+   Unpair.
+3. Open **Controller** and allow Bluetooth.
+4. Go back to Settings > Bluetooth and leave that screen open (the phone is visible
+   while it is open).
+5. On the laptop, run:
    ```bash
    ~/code/mobile-controller/pair-laptop.sh
    ```
-4. On the phone: Settings > Bluetooth > tap the laptop's name (`omarchy`) > Pair.
-5. Go back to Controller. It connects by itself.
+   Tap **Pair** on the phone when it asks.
+6. Go back to Controller. It should say "Connected to omarchy".
+7. So the phone keeps its sound on your headphones: Settings > Bluetooth > gear next
+   to `omarchy` > turn off Audio and Calls.
+
+The pairing must start from the laptop. Then the laptop reads the phone's service list
+and sees the keyboard. When the phone starts the pairing, the laptop only sees an
+audio device and the keys go nowhere.
 
 ### Use
 
 Open Controller. It reconnects to the last laptop. Click the PDF window on the laptop
 so it has focus, then press keys. Hold a key to repeat it.
 
-If the top line says "Not connected", tap it to retry.
+Tap the top line to pick which paired device is your laptop (or to retry).
 
 ### How it works
 
@@ -45,8 +55,9 @@ One Java file, no libraries. Build with `android/build.sh` (no Gradle).
   Bluetooth mode turned off. No app can fix that. Use the web version on a network
   that allows it.
 - "Another keyboard app is running": close the other Bluetooth keyboard app.
-- Pairing worked but it won't connect: on the phone, forget the laptop in Bluetooth
-  settings, then pair again with `pair-laptop.sh` while Controller is open.
+- "Connecting to" a wrong name (like an old PC): tap the top line, pick your laptop.
+- Connected but keys do nothing, or phone audio moves to the laptop: the pairing
+  started from the phone. Redo steps 2 to 6.
 
 ## Web version (same Wi-Fi only)
 
