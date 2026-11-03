@@ -61,9 +61,16 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    try:
+        server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    except OSError as e:
+        raise SystemExit(f"Port {PORT} busy ({e.strerror}). Already running in another terminal?")
     url = f"http://{lan_ip()}:{PORT}/?t={TOKEN}"
     if shutil.which("qrencode"):
         subprocess.run(["qrencode", "-t", "ANSIUTF8", "-m", "2", url])
     print(f"Scan the QR or open on phone (same Wi-Fi):\n  {url}")
     print("Keys go to the focused window. Ctrl+C to stop.")
-    ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopped.")
