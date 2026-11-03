@@ -21,6 +21,7 @@
     touch-action: none; -webkit-tap-highlight-color: transparent;
   }
   button.on { background: #fff; color: #000; }
+  body.off button { background: #3a0d0d; color: #f66; }  /* laptop not answering */
   [data-k=Up] { grid-area: up; }
   [data-k=Left] { grid-area: left; }
   [data-k=Right] { grid-area: right; }
@@ -36,7 +37,9 @@
 <button data-k="space">SPACE</button>
 <script>
   const token = new URLSearchParams(location.search).get("t");
-  const send = k => fetch(`/k/${k}?t=${token}`, { method: "POST" }).catch(() => {});
+  const offline = off => document.body.classList.toggle("off", off);
+  const send = k => fetch(`/k/${k}?t=${token}`, { method: "POST" })
+    .then(r => offline(!r.ok), () => offline(true));
 
   // Hold = repeat, like a real keyboard: wait 300 ms, then every 80 ms.
   for (const b of document.querySelectorAll("button")) {
