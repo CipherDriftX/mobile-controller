@@ -52,6 +52,7 @@
       e.preventDefault();
       stop();
       b.classList.add("on");
+      navigator.vibrate?.(10);
       send(b.dataset.k);
       wait = setTimeout(() => repeat = setInterval(() => send(b.dataset.k), 80), 300);
     });
