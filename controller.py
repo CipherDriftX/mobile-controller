@@ -50,7 +50,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def token_ok(self):
         given = parse_qs(urlsplit(self.path).query).get("t", [""])[0]
-        return secrets.compare_digest(given, TOKEN)
+        return secrets.compare_digest(given.encode(), TOKEN.encode())
 
     def reply(self, code, body=b"", ctype="text/plain; charset=utf-8"):
         self.send_response(code)
