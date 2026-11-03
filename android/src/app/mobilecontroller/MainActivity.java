@@ -68,10 +68,11 @@ public class MainActivity extends Activity {
         @Override public void onConnectionStateChanged(BluetoothDevice device, int state) {
             if (state == BluetoothProfile.STATE_CONNECTED) {
                 host = device;
+                getPreferences(MODE_PRIVATE).edit().putString("host", device.getAddress()).apply();
                 say("Connected to " + device.getName());
             } else if (state == BluetoothProfile.STATE_DISCONNECTED) {
                 host = null;
-                say("Not connected");
+                say("Not connected. Tap here to retry.");
             }
         }
     };
@@ -89,6 +90,7 @@ public class MainActivity extends Activity {
         status.setTextSize(16);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, dp(12), 0, dp(12));
+        status.setOnClickListener(v -> { if (host == null) connect(null); });
         root.addView(status);
 
         root.addView(key("▲", UP), tall(3));
@@ -151,13 +153,22 @@ public class MainActivity extends Activity {
         hid.connect(target);
     }
 
-    /** First paired computer. */
+    /** Last laptop used, else the first paired computer. */
     BluetoothDevice laptop() {
+        String last = getPreferences(MODE_PRIVATE).getString("host", "");
+        BluetoothDevice computer = null;
         for (BluetoothDevice d : adapter.getBondedDevices()) {
+            if (d.getAddress().equals(last)) return d;
             BluetoothClass c = d.getBluetoothClass();
-            if (c != null && c.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER) return d;
+            if (computer == null && c != null && c.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER)
+                computer = d;
         }
-        return null;
+        return computer;
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (hid != null && host == null) connect(null);  // back on screen = wants to use it
     }
 
     @Override protected void onDestroy() {
