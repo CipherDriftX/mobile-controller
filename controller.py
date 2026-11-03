@@ -24,6 +24,13 @@ def lan_ip():
             return "127.0.0.1"
 
 
+def show(url, where):
+    """Print a QR code the phone camera can scan, plus the link as text."""
+    if shutil.which("qrencode"):
+        subprocess.run(["qrencode", "-t", "ANSIUTF8", "-m", "2", url])
+    print(f"Phone ({where}): {url}")
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"  # keep-alive: phone reuses one connection, less lag
 
@@ -65,10 +72,7 @@ if __name__ == "__main__":
         server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     except OSError as e:
         raise SystemExit(f"Port {PORT} busy ({e.strerror}). Already running in another terminal?")
-    url = f"http://{lan_ip()}:{PORT}/?t={TOKEN}"
-    if shutil.which("qrencode"):
-        subprocess.run(["qrencode", "-t", "ANSIUTF8", "-m", "2", url])
-    print(f"Scan the QR or open on phone (same Wi-Fi):\n  {url}")
+    show(f"http://{lan_ip()}:{PORT}/?t={TOKEN}", "same Wi-Fi")
     print("Keys go to the focused window. Ctrl+C to stop.")
     try:
         server.serve_forever()
