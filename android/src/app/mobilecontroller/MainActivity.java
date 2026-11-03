@@ -1,8 +1,11 @@
 package app.mobilecontroller;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -41,6 +44,23 @@ public class MainActivity extends Activity {
         root.addView(key("▼", DOWN), tall(3));
         root.addView(key("SPACE", SPACE), tall(1.5f));
         setContentView(root);
+
+        if (Build.VERSION.SDK_INT >= 31
+                && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            say("Allow Bluetooth so the keys can reach the laptop");
+            requestPermissions(new String[] {Manifest.permission.BLUETOOTH_CONNECT}, 1);
+        } else {
+            start();
+        }
+    }
+
+    @Override public void onRequestPermissionsResult(int req, String[] perms, int[] results) {
+        if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) start();
+        else say("No Bluetooth permission. Allow it in Settings > Apps > Controller.");
+    }
+
+    void start() {
+        say("Starting...");
     }
 
     /** A key fires on finger down and lets go on finger up, like a real key. */
@@ -73,6 +93,8 @@ public class MainActivity extends Activity {
 
     void press(int code, boolean down) {
     }
+
+    void say(String text) { status.setText(text); }
 
     LinearLayout.LayoutParams tall(float w) { return cell(LinearLayout.LayoutParams.MATCH_PARENT, 0, w); }
     LinearLayout.LayoutParams wide(float w) { return cell(0, LinearLayout.LayoutParams.MATCH_PARENT, w); }
