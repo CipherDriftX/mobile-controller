@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
     final BluetoothHidDevice.Callback callback = new BluetoothHidDevice.Callback() {
         @Override public void onAppStatusChanged(BluetoothDevice plugged, boolean registered) {
             if (registered) connect(plugged);
+            else say("Keyboard stopped. Open the app again.");
         }
 
         @Override public void onConnectionStateChanged(BluetoothDevice device, int state) {
