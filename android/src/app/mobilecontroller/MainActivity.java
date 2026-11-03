@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
 
     final BluetoothHidDevice.Callback callback = new BluetoothHidDevice.Callback() {
         @Override public void onAppStatusChanged(BluetoothDevice plugged, boolean registered) {
-            if (registered) connect(plugged);
+            if (registered) connect(null);  // ignore "plugged": it can be a stale, wrong host
             else say("Keyboard stopped. Open the app again.");
         }
 
@@ -149,24 +149,28 @@ public class MainActivity extends Activity {
         if (hid == null) return;
         if (target == null) target = laptop();
         if (target == null) {
-            say("Pair with the laptop first (see README)");
+            say(adapter.getBondedDevices().isEmpty() ? "Pair with the laptop first (see README)"
+                    : "Tap here to pick your laptop");
             return;
         }
         say("Connecting to " + target.getName() + "...");
         hid.connect(target);
     }
 
-    /** Last laptop used, else the first paired computer. */
+    /** Last laptop used, else the only paired computer. Never guess between two. */
     BluetoothDevice laptop() {
         String last = getPreferences(MODE_PRIVATE).getString("host", "");
         BluetoothDevice computer = null;
+        int computers = 0;
         for (BluetoothDevice d : adapter.getBondedDevices()) {
             if (d.getAddress().equals(last)) return d;
             BluetoothClass c = d.getBluetoothClass();
-            if (computer == null && c != null && c.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER)
+            if (c != null && c.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER) {
                 computer = d;
+                computers++;
+            }
         }
-        return computer;
+        return computers == 1 ? computer : null;
     }
 
     @Override protected void onResume() {
