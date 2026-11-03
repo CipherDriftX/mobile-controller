@@ -8,12 +8,12 @@
 #   1. Settings > Bluetooth: forget this laptop if it is listed.
 #   2. Open Controller (that adds the keyboard), then go back to Settings > Bluetooth
 #      and leave that screen open (that makes the phone visible).
-set -euo pipefail
+set -eu  # no pipefail: "grep -q" closing a pipe early must not count as failure
 HID=00001124-0000-1000-8000-00805f9b34fb  # Bluetooth "Human Interface Device" service
 
 info() { bluetoothctl info "$1" 2>/dev/null; }
 name_of() { info "$1" | sed -n 's/^\s*Name: //p'; }
-phones() { for m in $(bluetoothctl devices | cut -d' ' -f2); do info "$m" | grep -q "Icon: phone" && echo "$m"; done; }
+phones() { for m in $(bluetoothctl devices | cut -d' ' -f2); do info "$m" | grep -q "Icon: phone" && echo "$m"; done; true; }
 
 # Old phone pairings were saved without the keyboard service: forget them, remember who.
 mine=""
