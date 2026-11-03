@@ -97,8 +97,8 @@ public class MainActivity extends Activity {
 
         root.addView(key("▲", UP), tall(3));
         LinearLayout mid = new LinearLayout(this);
-        mid.addView(key("◀", LEFT), wide(1));
-        mid.addView(key("▶", RIGHT), wide(1));
+        mid.addView(key("◀\uFE0E", LEFT), wide(1));  // FE0E: plain arrow, not emoji
+        mid.addView(key("▶\uFE0E", RIGHT), wide(1));
         root.addView(mid, tall(2));
         root.addView(key("▼", DOWN), tall(3));
         root.addView(key("SPACE", SPACE), tall(1.5f));
@@ -185,7 +185,7 @@ public class MainActivity extends Activity {
     TextView key(String label, int code) {
         TextView k = new TextView(this);
         k.setText(label);
-        k.setTextSize(label.length() > 1 ? 24 : 44);
+        k.setTextSize(label.equals("SPACE") ? 24 : 44);
         k.setGravity(Gravity.CENTER);
         k.setTextColor(Color.WHITE);
         GradientDrawable bg = new GradientDrawable();
