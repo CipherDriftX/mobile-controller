@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
                 say("Connected to " + device.getName());
             } else if (state == BluetoothProfile.STATE_DISCONNECTED) {
                 host = null;
-                say("Not connected. Tap here to retry.");
+                say("Not connected. Tap here to pick the laptop.");
             }
         }
     };
