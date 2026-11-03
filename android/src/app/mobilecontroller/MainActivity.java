@@ -2,6 +2,7 @@ package app.mobilecontroller;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
@@ -93,7 +94,7 @@ public class MainActivity extends Activity {
         status.setTextSize(16);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, dp(12), 0, dp(12));
-        status.setOnClickListener(v -> { if (host == null) connect(null); });
+        status.setOnClickListener(v -> pick());
         root.addView(status);
 
         root.addView(key("▲", UP), tall(3));
@@ -155,6 +156,21 @@ public class MainActivity extends Activity {
         }
         say("Connecting to " + target.getName() + "...");
         hid.connect(target);
+    }
+
+    /** List paired devices; the one tapped becomes the laptop. */
+    void pick() {
+        if (hid == null) return;
+        final BluetoothDevice[] all = adapter.getBondedDevices().toArray(new BluetoothDevice[0]);
+        String[] names = new String[all.length];
+        for (int i = 0; i < all.length; i++) names[i] = all[i].getName();
+        new AlertDialog.Builder(this).setTitle("Which one is your laptop?").setItems(names, (d, i) -> {
+            for (BluetoothDevice other : hid.getDevicesMatchingConnectionStates(new int[] {
+                    BluetoothProfile.STATE_CONNECTING, BluetoothProfile.STATE_CONNECTED}))
+                if (!other.equals(all[i])) hid.disconnect(other);  // drop a stuck or wrong host
+            getPreferences(MODE_PRIVATE).edit().putString("host", all[i].getAddress()).apply();
+            connect(all[i]);
+        }).show();
     }
 
     /** Last laptop used, else the only paired computer. Never guess between two. */
